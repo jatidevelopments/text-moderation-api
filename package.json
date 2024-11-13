@@ -1,0 +1,24 @@
+{
+  "name": "text-moderation-api-ts",
+  "version": "1.0.0",
+  "description": "Text Moderation API in TypeScript",
+  "main": "handler.ts",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "serverless deploy",
+    "offline": "serverless offline"
+  },
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "dotenv": "^10.0.0",
+    "json-colorizer": "^2.0.0",
+    "openai": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "serverless": "^3.31.0",
+    "serverless-dotenv-plugin": "^4.0.0",
+    "serverless-offline": "^11.0.0",
+    "serverless-plugin-typescript": "^2.1.0"
+  }
+}
