@@ -14,12 +14,15 @@ const INFO_COLOR = '\x1b[36m%s\x1b[0m';
 const WARNING_COLOR = '\x1b[33m%s\x1b[0m';
 const ERROR_COLOR = '\x1b[31m%s\x1b[0m';
 
-const SENSITIVE_CONTENT_REGEX = /\b(coprophilia|copro|feces|excrement|scat|fecal|shit|poop|feces[\s_-]?(play|fetish|matter|ingestion|consumption)|scat[\s_-]?fetish|coproplay|shit[\s_-]?fetish|poop[\s_-]?fetish|shit[\s_-]?play|poop[\s_-]?play)\b|\b(zoophilia|bestiality|animal[\s_-]?(sex|mating|copulation|intercourse|relations|abuse)|zoosexual|bestial|zoophilic|animal[\s_-]?intercourse|animal[\s_-]?copulation|intercourse[\s_-]?with[\s_-]?animals|zoophilia[\s_-]?fetish|sexual[\s_-]?acts[\s_-]?with[\s_-]?animals)\b/i;
+// Regex for detecting sensitive zoophilia and coprophilia terms
+const SENSITIVE_CONTENT_REGEX = /\b(coprophilia|copro|feces|excrement|scat|fecal|shit|poop|manure|dung|defecation|feces[\s_-]?(play|fetish|matter|ingestion|consumption)|scat[\s_-]?fetish|coproplay|shit[\s_-]?fetish|poop[\s_-]?fetish|shit[\s_-]?play|poop[\s_-]?play|scat[\s_-]?play|excrement[\s_-]?play|excrement[\s_-]?fetish)\b|\b(zoophilia|bestiality|zoosexual|bestial|zoophilic|sexual[\s_-]?acts[\s_-]?with[\s_-]?animals|animal[\s_-]?(sex|mating|copulation|intercourse|relations|abuse|get[\s_-]?(fucked|sex|sexual|intercourse)|beast[\s_-]?sex|bestial[\s_-]?acts|bestial[\s_-]?behavior|sexual[\s_-]?contact[\s_-]?with[\s_-]?animals|animal[\s_-]?abuse|animal[\s_-]?porn|zoo[\s_-]?porn|beast[\s_-]?porn|zoosexual[\s_-]?fetish|zoosexuality))\b|\b(dog|cat|horse|sheep|goat|cow|pig|donkey|chicken|duck|bird|fish|deer|rabbit|rat|mouse|squirrel|hamster|gerbil|guinea[\s_-]?pig|camel|llama|alpaca|monkey|ape|gorilla|orangutan|baboon|lion|tiger|leopard|panther|elephant|zebra|bear|wolf|fox|coyote|otter|ferret|weasel|skunk|racoon|badger|moose|elk|buffalo|bison|whale|dolphin|porpoise|shark|octopus|squid|lobster|crab|turtle|tortoise|frog|toad|lizard|snake|iguana|gecko|crocodile|alligator|kangaroo|koala|platypus|wombat|opossum|hedgehog|bat|mole|beaver|pigeon|crow|raven|seagull|eagle|hawk|falcon|owl|vulture|parrot|peacock|flamingo|ostrich|emu|quail|sparrow|swallow|bee|wasp|ant|termite|spider|scorpion|cockroach|mosquito|fly|worm|slug|snail|mammal|rodent|canine|feline|equine|bovine|avian|reptile|amphibian|fish|insect)\b/i;
+
+// Regex for detecting underage or child references
+const UNDERAGE_CONTENT_REGEX = /\b(child|children|teenager|teenagers|teen|underage|minors?|infant|toddler|preadolescent|young adult|juvenile|baby|babies|boy|girl|preteen|adolescent|14[\s-]?(year[\s-]?old|y[\s/]o)|15[\s-]?(year[\s-]?old|y[\s/]o)|16[\s-]?(year[\s-]?old|y[\s/]o)|17[\s-]?(year[\s-]?old|y[\s/]o))\b/i;
 
 // Define a mapping for target categories with fallback if OpenAI adds more relevant categories
 const targetMappings: { [key: string]: string } = {
     child_exploitation: 'sexual/minors',
-    // zoophilia and copro have no direct mappings in this response set
 };
 
 // Call the OpenAI Moderation API function
@@ -59,7 +62,7 @@ export const lambdaHandler = async (
     console.log(INFO_COLOR, `Processing message - '${message}'`);
 
     try {
-
+        // Check for sensitive content using regex for Zoophilia and Coprophilia
         if (SENSITIVE_CONTENT_REGEX.test(message)) {
             return {
                 statusCode: 200,
@@ -79,12 +82,25 @@ export const lambdaHandler = async (
 
         console.log(INFO_COLOR, `Moderation results - Flagged: ${flagged}, Categories: ${JSON.stringify(categories)}`);
 
-        // Define a threshold for high-risk content
+        // Check for "sexual" category and underage references
+        if (categories['sexual'] && UNDERAGE_CONTENT_REGEX.test(message)) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({
+                    message: 'High-risk content detected',
+                    is_flagged: true,
+                    flagged_type: 'sexual_with_underage_reference',
+                    probability: 1,
+                    details: ['sexual', 'underage_reference'],
+                }),
+            };
+        }
+
+        // Check for other mapped categories from OpenAI response
         const threshold = 0.8;
         let flaggedLabel: string | null = null;
         let flaggedProbability: number | null = null;
 
-        // Check only for the mapped categories
         for (const [target, openAICategory] of Object.entries(targetMappings)) {
             const score = category_scores[openAICategory];
             if (typeof score === 'number' && score > threshold) {
@@ -95,7 +111,6 @@ export const lambdaHandler = async (
             }
         }
 
-        // Format the response based on target category results
         if (flaggedLabel) {
             return {
                 statusCode: 200,
