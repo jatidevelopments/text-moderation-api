@@ -20,3 +20,6 @@ var/
 .serverless
 node_modules
 .env
+
+models
+results

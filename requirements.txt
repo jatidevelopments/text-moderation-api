@@ -1,9 +1,0 @@
-# OpenAI library for API interaction
-openai==1.54.4
-
-# Colorama for colored console output (for logging clarity)
-colorama==0.4.6
-
-# Pydantic for data validation and parsing
-pydantic==2.7.4
-pydantic_core==2.18.4

@@ -1,0 +1,38 @@
+service: text-moderation-api
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: eu-central-1  # Change to your preferred AWS region
+
+functions:
+  koala:
+    handler: koala_lambda.lambda_handler
+    memorySize: 512
+    timeout: 30
+    environment:
+      MODEL_PATH: models/model
+      TOKENIZER_PATH: models/tokenizer
+    events:
+      - http:
+          path: moderation
+          method: post
+
+package:
+  include:
+    - koala_lambda.py
+    - models/**
+  exclude:
+    - node_modules/**
+    - .gitignore
+    - .git/**
+    - tests/**  # Exclude test directories if present
+    - docs/**   # Exclude documentation files if present
+    - "*.md"      # Exclude markdown files if not needed
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+plugins:
+  - serverless-python-requirements
