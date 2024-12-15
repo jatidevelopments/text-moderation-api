@@ -7,12 +7,15 @@
     "build": "tsc",
     "deploy": "serverless deploy",
     "offline": "serverless offline",
-    "test": "jest"
+    "test": "jest",
+    "dev": "ts-node-dev --respawn --transpile-only handler_max.ts",
+    "start": "ts-node handler_max.ts"
   },
   "dependencies": {
     "@types/aws-lambda": "^8.10.145",
     "dotenv": "^10.0.0",
     "json-colorizer": "^2.0.0",
+    "node-fetch": "^2.6.7",
     "openai": "^3.1.0"
   },
   "devDependencies": {
@@ -23,9 +26,10 @@
     "jest": "^29.7.0",
     "papaparse": "^5.4.1",
     "serverless": "^3.31.0",
-    "serverless-dotenv-plugin": "^4.0.0",
-    "serverless-offline": "^11.0.0",
-    "serverless-plugin-typescript": "^2.1.0",
-    "ts-jest": "^29.2.5"
+    "serverless-dotenv-plugin": "^4.0.2",
+    "serverless-offline": "^11.6.0",
+    "serverless-plugin-typescript": "^2.1.5",
+    "ts-jest": "^29.2.5",
+    "ts-node-dev": "^2.0.0"
   }
 }

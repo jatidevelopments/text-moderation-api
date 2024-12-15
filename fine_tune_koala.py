@@ -7,8 +7,8 @@ from torch.nn import BCEWithLogitsLoss
 import datetime
 
 # Load the model and tokenizer with memory optimizations
-model_name = "./models/text_moderation_model_20241204_221216"
-tokenizer_name = "./models/text_moderation_tokenizer_20241204_221216"
+model_name = "./models/text_moderation_model"
+tokenizer_name = "./models/text_moderation_tokenizer"
 
 # Configure model settings
 config = AutoConfig.from_pretrained(model_name)

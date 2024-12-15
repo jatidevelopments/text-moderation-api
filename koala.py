@@ -6,8 +6,8 @@ import torch
 # Define the model folder and file names
 model_name = "KoalaAI/Text-Moderation"
 model_folder = "models"
-model_path = os.path.join(model_folder, "text_moderation_model_20241204_221216")
-tokenizer_path = os.path.join(model_folder, "text_moderation_tokenizer_20241204_221216")
+model_path = os.path.join(model_folder, "text_moderation_model_20241211_201421")
+tokenizer_path = os.path.join(model_folder, "text_moderation_tokenizer_20241211_201421")
 
 # Ensure the models folder exists
 os.makedirs(model_folder, exist_ok=True)

@@ -34,7 +34,7 @@ function replaceFamilyKeywords(text: string): string {
         'grandma', 'grandmother', 'granny', 'nana', 'granma', 'gramma',
         'grandpa', 'grandfather', 'gramps', 'papa', 'granpa', 'grampa',
         'family', 'families', 'parent', 'parents', 'famly', 'parrent',
-        'child', 'children', 'kid', 'kids', 'chld', 'kidd'
+        'girl','boy'
     ];
     
     let modifiedText = text;
@@ -52,15 +52,25 @@ const targetMappings: { [key: string]: string } = {
 
 // Call the OpenAI Moderation API function
 async function checkModeration(content: string): Promise<any> {
-    const response = await openai.createModeration({
-        model: 'omni-moderation-latest',
-        input: content,
-    });
+    try {
+        const response = await openai.createModeration({
+            input: content,
+        });
 
-    // Log the moderation API response
-    console.log(INFO_COLOR, `OpenAI Moderation API Response: ${JSON.stringify(response.data)}`);
+        // Extract only the needed fields from the response
+        const result = {
+            results: response.data.results.map(r => ({
+                flagged: r.flagged,
+                categories: { ...r.categories },
+                category_scores: { ...r.category_scores }
+            }))
+        };
 
-    return response.data.results[0];
+        return result;
+    } catch (error) {
+        console.error(ERROR_COLOR, `Error - OpenAI Moderation API: ${error.message || String(error)}`);
+        throw error;       
+    }
 }
 
 // Lambda handler function
@@ -75,7 +85,7 @@ export const lambdaHandler = async (
         const body = JSON.parse(event.body || '{}');
         message = body.message;
     } catch (error) {
-        console.error(ERROR_COLOR, `Error - JSON Decoding: ${error}`);
+        console.error(ERROR_COLOR, `Error - JSON Decoding: ${error.message || String(error)}`);
         return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON in request body.' }) };
     }
 
@@ -105,12 +115,12 @@ export const lambdaHandler = async (
 
         // Call OpenAI's Moderation API
         const moderationResult = await checkModeration(message);
-        const { flagged, categories, category_scores } = moderationResult;
+        const { flagged, categories, category_scores } = moderationResult.results[0];
 
         console.log(INFO_COLOR, `Moderation results - Flagged: ${flagged}, Categories: ${JSON.stringify(categories)}`);
 
         // Check if OpenAI flagged "sexual/minors" category is flagged with underage content
-        if (categories['sexual/minors'] && category_scores['sexual/minors'] > 0.89 /* || UNDERAGE_CONTENT_REGEX.test(message) */) {
+        if (categories['sexual/minors'] && category_scores['sexual/minors'] > 0.6 /* || UNDERAGE_CONTENT_REGEX.test(message) */) {
             return {
                 statusCode: 200,
                 body: JSON.stringify({
@@ -123,18 +133,27 @@ export const lambdaHandler = async (
             };
         }
 
-        
-    return {
-        statusCode: 200,
+        return {
+            statusCode: 200,
+            body: JSON.stringify({
+                message: 'Content approved',
+                is_flagged: false,
+                details: categories,
+            }),
+        };
+    } catch (error) {
+        console.error(ERROR_COLOR, `Error - Model Inference: ${error.message || String(error)}`);
+        return { statusCode: 500, body: JSON.stringify({ error: "An unexpected error occurred:" + error.message }) };
+    }
+};
+
+(async () => {
+    const testEvent = {
         body: JSON.stringify({
-            message: 'Content approved',
-            is_flagged: false,
-            details: categories,
+            message: "Honey it's been 5 years have passed our kids are now 19 years hows your pussy and ass have it recover",
         }),
     };
 
-    } catch (error) {
-        console.error(ERROR_COLOR, `Error - Model Inference: ${error}`);
-        return { statusCode: 500, body: JSON.stringify({ error: 'Model inference failed.' }) };
-    }
-};
+    const result = await lambdaHandler(testEvent as any);
+    console.log("Lambda Response:", JSON.parse(result.body));
+})();

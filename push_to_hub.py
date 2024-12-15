@@ -3,8 +3,8 @@ from huggingface_hub import HfApi
 
 def push_to_hub():
     # Load the model and tokenizer
-    model_name = "./models/text_moderation_model_20241204_221216"
-    tokenizer_name = "./models/text_moderation_tokenizer_20241204_221216"
+    model_name = "./models/text_moderation_model_20241211_201421"
+    tokenizer_name = "./models/text_moderation_tokenizer_20241211_201421"
     
     print("Loading model and tokenizer...")
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
